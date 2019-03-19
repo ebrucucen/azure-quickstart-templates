@@ -27,7 +27,7 @@ postgresql.log_min_duration_statement = 500
 elasticsearch.heap_size = 3500
 EOF
 
-chef-backend-ctl join-cluster 10.0.0.10 -s chef-backend-secrets.json --accept-license --yes --verbose --quiet
+chef-backend-ctl join-cluster 10.0.1.10 -s chef-backend-secrets.json --accept-license --yes --verbose --quiet
 
 # enable basic data collection
 echo 'ENABLED="true"' > /etc/default/sysstat

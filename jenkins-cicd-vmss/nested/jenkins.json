@@ -105,6 +105,20 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "jenkinsSAType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_ZRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "Jenkins VM Storage Type must match "
+      }
     }
   },
   "variables": {
@@ -121,7 +135,12 @@
     "sNetAddressPrefixes": "10.0.0.0/24",
     "vmPrivateIP": "10.0.0.5",
     "vmImageName": "myPackerLinuxImage",
-    "_extensionScript": "setup.sh"
+    "_extensionScript": "setup.sh",
+    "jenkinsSAName":"[concat('jenkins', uniqueString(resourceGroup().id))]",
+    "jenkinsSAType":"[parameters('jenkinsSAType')]",
+    "tagvalues": {
+      "provider": "[toUpper('33194f91-eb5f-4110-827a-e95f640a9e46')]"
+    }
   },
   "resources": [
     {
@@ -134,6 +153,20 @@
         "dnsSettings": {
           "domainNameLabel": "[parameters('dnsPrefix')]"
         }
+      }
+    },
+    {
+      "name": "[variables('jenkinsSAName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "JenkinsStorage",
+        "provider": "[variables('tagvalues').provider]"
+      },
+      "properties": {
+        "accountType": "[variables('jenkinsSAType')]"
       }
     },
     {
@@ -237,7 +270,8 @@
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]",
+        "[resourceId('Microsoft.Compute/storageAccount', variables('jenkinsSAName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -270,6 +304,12 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
             }
           ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+          "enabled": true,
+          "storageUri": "[concat('https://', variables('jenkinsSAName'), '.blob.core.windows.net')]"
+          }
         }
       },
       "resources": [

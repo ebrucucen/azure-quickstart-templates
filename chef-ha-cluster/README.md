@@ -16,12 +16,37 @@ This template has artifacts (Configuration Scripts) which are automatically grab
 
 This template also uses blob storage to share secrets and configuration templates between nodes in the cluster. You must create a blob storage container for these and provide an SAS token. If you're creating a storage container for artifacts, you can use the same one for secrets storage.
 
+## Ebru's changes: 
+
+1. Deploy.sh file do copy secrets location/sastoken from artifacts directory
+2. Template does create 2 vms rather than 3 (10 core limit), each in a different region, vnet
+3. There is a vnet peering added to get them talking
+4. Changed readme file for ssh connecting to vm's (I can login to FE one, not BE one)
+5. The deployment script fails at BE01Setup stage:
+```
+  "status": "Failed",
+  "error": {
+    "code": "ResourceDeploymentFailure",
+    "message": "The resource operation completed with terminal provisioning state 'Failed'.",
+    "details": [
+      {
+        "code": "VMExtensionProvisioningError",
+        "message": "VM has reported a failure when processing extension 'BE0Setup'. Error message: \"Enable failed: processing file downloads failed: failed to download file[0]: failed to download file: unexpected status code: got=404 expected=200\"."
+      }
+    ]
+  ```
+
 ## Using the command-line
  ```PowerShell
  .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory 'chef-ha-cluster' UploadArtifacts
  ```
+ Create and put your sshkey into parameters file: 
  ```bash
- azure-group-deploy.sh -a chef-ha-cluster -l eastus -u
+sshKeyData=$(cat ~/.ssh/azure_rsa.pub)
+```
+And run 
+ ```bash
+ deploy.sh -a chef-ha-cluster -l eastus -u
  ```
 
 ## Using the "deploy to Azure" button
@@ -41,13 +66,13 @@ This template also uses blob storage to share secrets and configuration template
 #### Connect
 
 Connect using ssh
-To reach a frontend use port 50000,50001,50002 (FE0,1,2):
+To reach a frontend use port 50000,50001 (FE0,1):
 ```
-ssh -p 50000 chefadmin@yourhost.youregion.cloudapp.azure.com
+ssh -i ~/.ssh/azure_rsa -p 50000 GEN-UNIQUE@GEN-UNIQUE-13.eastus.cloudapp.azure.com
 ```
 To reach a backend do something like
 ```
-ssh -o ProxyCommand="ssh -W %h:%p -p 50000 -q chefadmin@yourhost.youregion.cloudapp.azure.com" chefadmin@be0
+ssh -i ~/.ssh/azure_rsa -o ProxyCommand="ssh -W %h:%p -p 50000 -q GEN-UNIQUE@GEN-UNIQUE-13.westus.cloudapp.azure.com" GEN-UNIQUE@be0
 ```
 
 #### Management

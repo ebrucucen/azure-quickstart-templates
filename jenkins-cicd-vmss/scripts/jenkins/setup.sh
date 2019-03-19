@@ -57,7 +57,7 @@ image="myPackerLinuxImage"
 job_short_name="BuildVM"
 credential_id="vmCred"
 credential_description="VM credential"
-ms_artifacts_location="https://raw.githubusercontent.com/Azure/azure-devops-utils/v0.28.1/"
+ms_artifacts_location="https://raw.githubusercontent.com/Azure/azure-devops-utils/v0.30.0/"
 ms_artifacts_location_sas_token=""
 
 while [[ $# > 0 ]]
@@ -179,8 +179,17 @@ ms_run_util_script "jenkins/install_jenkins.sh" -jf "${jenkins_fqdn}" -pi "${jen
 
 # install required plugins
 plugins=(credentials envinject)
+DEBIAN_FRONTEND="noninteractive"
+export DEBIAN_FRONTEND="noninteractive"
+
+ms_run_util_script "jenkins/run-cli-command.sh" -j "$jenkins_url" -ju "$jenkins_username" -jp "$jenkins_password" -c "export DEBIAN_FRONTEND=noninteractive"
+
 for plugin in "${plugins[@]}"; do
-  ms_run_util_script "jenkins/run-cli-command.sh" -j "$jenkins_url" -ju "$jenkins_username" -jp "$jenkins_password" -c "install-plugin $plugin -deploy"
+  echo "plugin: $plugin "
+  if [[ $plugin==*"deb"* ]]; then
+  else
+    ms_run_util_script "jenkins/run-cli-command.sh" -j "$jenkins_url" -ju "$jenkins_username" -jp "$jenkins_password" -c "install-plugin $plugin -deploy -y"
+  fi
 done
 
 # restart jenkins
